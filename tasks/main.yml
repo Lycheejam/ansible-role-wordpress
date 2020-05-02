@@ -1,27 +1,13 @@
 ---
 - name: Wordpress | Install php
-  apt:
-    pkg: ['php-pear', 'php-fpm', 'php-dev', 'php-zip', 'php-curl',
-          'php-xmlrpc', 'php-gd', 'php-mysql', 'php-mbstring', 'php-xml']
-    update_cache: yes
-    cache_valid_time: 86400
+  yum:
+    name: ['php-pear', 'php-fpm', 'php-devel', 'php-zip', 'php-curl', 'php-xmlrpc', 'php-gd', 'php-mysql', 'php-mbstring', 'php-xml', 'php-mysql']
     state: present
-
-- name: Wordpress | Install nginx
-  apt:
-    pkg: nginx
-    update_cache: yes
-    cache_valid_time: 86400
-    state: present
-  when: wp_webserver == "nginx"
 
 - name: Wordpress | Install apache
-  apt:
-    pkg: ['apache2', 'libapache2-mod-php']
-    update_cache: yes
-    cache_valid_time: 86400
+  yum:
+    name: httpd
     state: present
-  when: wp_webserver == "apache"
 
 - name: Wordpress | Remove elements from /var/www/html/
   file:
@@ -72,63 +58,9 @@
 - name: Wordpress | Change ownership of installation directory
   file:
     path: "{{ wp_install_dir }}"
-    owner: www-data
-    group: www-data
+    owner: root
+    group: root
     state: directory
     recurse: yes
 
-- include: nginx.yml
-  when: wp_webserver == "nginx"
-
 - include: apache.yml
-  when: wp_webserver == "apache"
-
-- name: Installing mysql-server
-  apt:
-    pkg: mysql-server
-    update_cache: yes
-    cache_valid_time: 86400
-    state: present
-  when: ansible_distribution == 'Ubuntu'
-
-- name: Installing mariadb-server
-  apt:
-    pkg: mariadb-server
-    update_cache: yes
-    cache_valid_time: 86400
-    state: present
-  when: ansible_distribution == 'Debian'
-
-- name: Start MariaDB
-  service:
-    name: mysql
-    state: started
-
-- name: Installing dependencies
-  apt:
-    pkg: [ 'python-mysqldb', 'php-mysql' ]
-    update_cache: yes
-    cache_valid_time: 86400
-    state: present
-  notify:
-    - restart {{ wp_webserver }}
-
-- name: Install pymysql
-  apt:
-    pkg: python3-pymysql
-    cache_valid_time: 86400
-    state: present
-  when: ansible_distribution == 'Ubuntu'
-
-- name: Create mysql database
-  mysql_db:
-    name: "{{ wp_mysql_db }}"
-    state: present
-    login_unix_socket: /var/run/mysqld/mysqld.sock
-
-- name: Create mysql user
-  mysql_user:
-    name: "{{ wp_mysql_user }}"
-    password: "{{ wp_mysql_password }}"
-    priv: '*.*:ALL'
-    login_unix_socket: /var/run/mysqld/mysqld.sock
