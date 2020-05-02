@@ -1,5 +1,2 @@
-.*
-*~
-vagrant_*
-!.travis.yml
-!.gitignore
+.venv/
+.vagrant/
